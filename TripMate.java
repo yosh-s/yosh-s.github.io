@@ -9,8 +9,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.logging.Level;
-import org.json.JSONObject;
-import org.json.JSONArray;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class TripMate {
     private static final Logger LOGGER = Logger.getLogger(TripMate.class.getName());
@@ -109,26 +109,19 @@ public class TripMate {
     public static void handleResponse(String userInput) {
         try {
             String googleApiKey = "AIzaSyATdVI59TbqVsT0vL7qid6SNd0wghu7bHI";
+            // load appi key from env file
+            
             String prompt = SYSTEM_PROMPT + "\nUser: " + userInput;
 
-            // Create JSON payload for Gemini API
-            JSONObject requestBody = new JSONObject();
-            JSONArray contents = new JSONArray();
-            JSONObject content = new JSONObject();
-            JSONArray parts = new JSONArray();
-            JSONObject part = new JSONObject();
-            part.put("text", prompt);
-            parts.put(part);
-            content.put("parts", parts);
-            contents.put(content);
-            requestBody.put("contents", contents);
+            // Create JSON payload manually
+            String requestBody = createJsonPayload(prompt);
 
             // Set up HttpClient
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + googleApiKey))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
             // Send request and get response
@@ -136,24 +129,14 @@ public class TripMate {
             int statusCode = response.statusCode();
 
             if (statusCode == 200) {
-                // Parse JSON response
-                JSONObject jsonResponse = new JSONObject(response.body());
-                JSONArray candidates = jsonResponse.getJSONArray("candidates");
-                if (candidates.length() > 0) {
-                    JSONObject candidate = candidates.getJSONObject(0);
-                    JSONObject contentResponse = candidate.getJSONObject("content");
-                    JSONArray partsResponse = contentResponse.getJSONArray("parts");
-                    if (partsResponse.length() > 0) {
-                        String text = partsResponse.getJSONObject(0).getString("text");
-                        System.out.print("TripMate: " + text);
-                        System.out.println();
-                    } else {
-                        System.out.println("TripMate: No response content received from API.");
-                        LOGGER.severe("No content in API response for input: " + userInput);
-                    }
+                // Parse JSON response manually
+                String responseText = parseJsonResponse(response.body());
+                if (responseText != null && !responseText.isEmpty()) {
+                    System.out.print("TripMate: " + responseText);
+                    System.out.println();
                 } else {
-                    System.out.println("TripMate: No response candidates received from API.");
-                    LOGGER.severe("No candidates in API response for input: " + userInput);
+                    System.out.println("TripMate: No response content received from API.");
+                    LOGGER.severe("No content in API response for input: " + userInput);
                 }
             } else if (statusCode == 401 || statusCode == 403) {
                 System.out.println("TripMate: Authentication error with Gemini API. Please check your API key.");
@@ -172,5 +155,161 @@ public class TripMate {
             System.out.println("TripMate: Unexpected error: " + e.getMessage() + ". Please try again!");
             LOGGER.severe("Unexpected error processing response: " + e.getMessage());
         }
+    }
+
+    /**
+     * Creates JSON payload manually without using external JSON library
+     */
+    private static String createJsonPayload(String prompt) {
+        // Escape special characters in the prompt
+        String escapedPrompt = escapeJsonString(prompt);
+        
+        // Build JSON structure manually
+        return "{" +
+               "\"contents\": [" +
+               "{" +
+               "\"parts\": [" +
+               "{" +
+               "\"text\": \"" + escapedPrompt + "\"" +
+               "}" +
+               "]" +
+               "}" +
+               "]" +
+               "}";
+    }
+
+    /**
+     * Parses JSON response manually to extract the text content
+     */
+    private static String parseJsonResponse(String jsonResponse) {
+        try {
+            // Use regex to find the text content in the JSON response
+            // Pattern to match: "text":"content"
+            Pattern pattern = Pattern.compile("\"text\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+            Matcher matcher = pattern.matcher(jsonResponse);
+            
+            if (matcher.find()) {
+                String extractedText = matcher.group(1);
+                // Unescape JSON string
+                return unescapeJsonString(extractedText);
+            }
+            
+            return null;
+        } catch (Exception e) {
+            LOGGER.severe("Error parsing JSON response: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Escapes special characters for JSON string
+     */
+    private static String escapeJsonString(String input) {
+        if (input == null) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                default:
+                    // Handle other control characters
+                    if (c < 32 || c > 126) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Unescapes JSON string
+     */
+    private static String unescapeJsonString(String input) {
+        if (input == null) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        boolean escape = false;
+        
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            
+            if (escape) {
+                switch (c) {
+                    case '"':
+                        sb.append('"');
+                        break;
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                    case 'b':
+                        sb.append('\b');
+                        break;
+                    case 'f':
+                        sb.append('\f');
+                        break;
+                    case 'n':
+                        sb.append('\n');
+                        break;
+                    case 'r':
+                        sb.append('\r');
+                        break;
+                    case 't':
+                        sb.append('\t');
+                        break;
+                    case 'u':
+                        // Handle unicode escape sequence
+                        if (i + 4 < input.length()) {
+                            String hex = input.substring(i + 1, i + 5);
+                            try {
+                                int codePoint = Integer.parseInt(hex, 16);
+                                sb.append((char) codePoint);
+                                i += 4; // Skip the next 4 characters
+                            } catch (NumberFormatException e) {
+                                sb.append(c); // If parsing fails, just append the character
+                            }
+                        } else {
+                            sb.append(c);
+                        }
+                        break;
+                    default:
+                        sb.append(c);
+                        break;
+                }
+                escape = false;
+            } else if (c == '\\') {
+                escape = true;
+            } else {
+                sb.append(c);
+            }
+        }
+        
+        return sb.toString();
     }
 }
