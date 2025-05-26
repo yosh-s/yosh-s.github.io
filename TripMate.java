@@ -109,6 +109,8 @@ public class TripMate {
     public static void handleResponse(String userInput) {
         try {
             String googleApiKey = "AIzaSyATdVI59TbqVsT0vL7qid6SNd0wghu7bHI";
+            // load appi key from env file
+            
             String prompt = SYSTEM_PROMPT + "\nUser: " + userInput;
 
             // Create JSON payload manually
