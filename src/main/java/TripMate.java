@@ -1,4 +1,3 @@
-import java.util.Scanner;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -28,69 +27,6 @@ public class TripMate {
         "Generate a short, enthusiastic, travel-themed greeting for TripMate, a travel assistant chatbot. " +
         "The greeting should be unique, welcoming, and inspire users to explore travel ideas. " +
         "Keep it concise (1-2 sentences) and include at least one emoji. Do not include any non-travel content.";
-
-    public static void main(String[] args) {
-        // Load .env variables
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-        // Initialize logging
-        try {
-            FileHandler fileHandler = new FileHandler("tripmate.log", true);
-            fileHandler.setFormatter(new SimpleFormatter());
-            LOGGER.addHandler(fileHandler);
-            LOGGER.setLevel(Level.INFO);
-        } catch (IOException e) {
-            System.out.println("Error setting up logging: " + e.getMessage());
-            LOGGER.severe("Logging setup failed: " + e.getMessage());
-            return;
-        }
-
-        // Check API key
-        String googleApiKey = dotenv.get("GOOGLE_API_KEY");
-        if (googleApiKey == null || googleApiKey.isEmpty()) {
-            System.out.println("Error: GOOGLE_API_KEY not set or invalid.");
-            LOGGER.severe("GOOGLE_API_KEY not set or invalid.");
-            return;
-        }
-
-
-        // Generate dynamic greeting
-        String greeting = generateGreeting(googleApiKey);
-        System.out.println(greeting != null ? greeting : "🌍 Welcome to TripMate - Your Travel Assistant! ✈️");
-        printHelp();
-
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            System.out.print("\nYou: ");
-            String userInput = scanner.nextLine().trim();
-
-            if (userInput.equalsIgnoreCase("exit") || userInput.equalsIgnoreCase("quit")) {
-                System.out.println("✈️ Safe travels! Thanks for using TripMate!");
-                break;
-            }
-            if (userInput.equalsIgnoreCase("help")) {
-                printHelp();
-                continue;
-            }
-            if (userInput.isEmpty()) {
-                System.out.println("Please enter a message.");
-                continue;
-            }
-
-            if (!isTravelRelated(userInput, googleApiKey)) {
-                if (isMathRelated(userInput)) {
-                    System.out.println("TripMate: You asked about " + userInput + " and it is related to math, and I'm specialized for trip planning so I can't help you with that.");
-                } else {
-                    System.out.println("TripMate: It looks like your question might not be travel-related. Could you clarify how it relates to travel? For example, try asking about a budget-friendly trip to Paris or the best time to visit Japan! Type 'help' for more ideas! 🌎");
-                }
-                LOGGER.info("Non-travel query: " + userInput);
-                continue;
-            }
-
-            handleResponse(userInput, googleApiKey);
-        }
-        scanner.close();
-    }
 
     private static String generateGreeting(String apiKey) {
         try {

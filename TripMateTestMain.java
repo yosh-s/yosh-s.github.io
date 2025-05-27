@@ -1,80 +1,73 @@
+import java.util.Scanner;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.io.IOException;
 import java.util.logging.Level;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class TripMateTestMain {
     private static final Logger LOGGER = Logger.getLogger(TripMateTestMain.class.getName());
 
     public static void main(String[] args) {
+        // Load .env variables
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
         // Set up logging
         try {
-            FileHandler fileHandler = new FileHandler("tripmate_test.log");
+            FileHandler fileHandler = new FileHandler("tripmate_test.log", true);
             fileHandler.setFormatter(new SimpleFormatter());
             LOGGER.addHandler(fileHandler);
-            LOGGER.setLevel(Level.SEVERE);
+            LOGGER.setLevel(Level.INFO);
         } catch (IOException e) {
             System.out.println("Error setting up logging: " + e.getMessage());
-            LOGGER.severe("Error setting up logging: " + e.getMessage());
+            LOGGER.severe("Logging setup failed: " + e.getMessage());
             return;
         }
 
-        // Check for API key (simulated, as in TripMate)
-        String googleApiKey = "AIzaSyATdVI59TbqVsT0vL7qid6SNd0wghu7bHI";
+        // Check API key
+        String googleApiKey = dotenv.get("GOOGLE_API_KEY");
         if (googleApiKey == null || googleApiKey.isEmpty()) {
-            System.out.println("Error: GOOGLE_API_KEY not found in environment variables. Please set it and try again.");
-            LOGGER.severe("GOOGLE_API_KEY not found in environment variables.");
+            System.out.println("Error: GOOGLE_API_KEY not set or invalid.");
+            LOGGER.severe("GOOGLE_API_KEY not set or invalid.");
             return;
         }
 
-        System.out.println("🌍 TripMate Test Suite 🌍");
-
-        // Test 1: printHelp method
-        System.out.println("\n=== Testing printHelp ===");
+        // Generate dynamic greeting
+        String greeting = TripMate.generateGreeting(googleApiKey);
+        System.out.println(greeting != null ? greeting : "🌍 Welcome to TripMate - Your Travel Assistant! ✈️");
         TripMate.printHelp();
 
-        // Test 2: isTravelRelated method
-        System.out.println("\n=== Testing isTravelRelated ===");
-        testIsTravelRelated("What's the best time to visit Japan?", true);
-        testIsTravelRelated("How's the weather in Paris?", true);
-        testIsTravelRelated("What's the capital of France?", false);
-        testIsTravelRelated("Can you book a flight to Rome?", true);
-        testIsTravelRelated("How to code in Java?", false);
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("\nYou: ");
+            String userInput = scanner.nextLine().trim();
 
-        // Test 3: handleResponse method
-        System.out.println("\n=== Testing handleResponse ===");
-        testHandleResponse("What's the best time to visit Sri lanka?");
-        testHandleResponse("What are the top attractions in Sri lanka? what are things to do in there?");
-
-        testHandleResponse("Suggest an itinerary for Paris");
-        testHandleResponse("Non-travel question about math");
-    }
-
-    private static void testIsTravelRelated(String input, boolean expected) {
-        try {
-            boolean result = TripMate.isTravelRelated(input);
-            System.out.printf("Input: %s\nExpected: %b, Got: %b\n", input, expected, result);
-            if (result == expected) {
-                System.out.println("Test PASSED");
-            } else {
-                System.out.println("Test FAILED");
-                LOGGER.severe("isTravelRelated test failed for input: " + input);
+            if (userInput.equalsIgnoreCase("exit") || userInput.equalsIgnoreCase("quit")) {
+                System.out.println("✈️ Safe travels! Thanks for using TripMate!");
+                break;
             }
-        } catch (Exception e) {
-            System.out.println("Error testing isTravelRelated: " + e.getMessage());
-            LOGGER.severe("Error testing isTravelRelated for input: " + input + ", Error: " + e.getMessage());
-        }
-    }
+            if (userInput.equalsIgnoreCase("help")) {
+                TripMate.printHelp();
+                continue;
+            }
+            if (userInput.isEmpty()) {
+                System.out.println("Please enter a message.");
+                continue;
+            }
 
-    private static void testHandleResponse(String input) {
-        try {
-            System.out.println("Input: " + input);
-            System.out.print("Response: ");
-            TripMate.handleResponse(input);
-        } catch (Exception e) {
-            System.out.println("Error testing handleResponse: " + e.getMessage());
-            LOGGER.severe("Error testing handleResponse for input: " + input + ", Error: " + e.getMessage());
+            if (!TripMate.isTravelRelated(userInput, googleApiKey)) {
+                if (TripMate.isMathRelated(userInput)) {
+                    System.out.println("TripMate: You asked about " + userInput + " and it is related to math, and I'm specialized for trip planning so I can't help you with that.");
+                } else {
+                    System.out.println("TripMate: It looks like your question might not be travel-related. Could you clarify how it relates to travel? For example, try asking about a budget-friendly trip to Paris or the best time to visit Japan! Type 'help' for more ideas! 🌎");
+                }
+                LOGGER.info("Non-travel query: " + userInput);
+                continue;
+            }
+
+            TripMate.handleResponse(userInput, googleApiKey);
         }
+        scanner.close();
     }
 }
