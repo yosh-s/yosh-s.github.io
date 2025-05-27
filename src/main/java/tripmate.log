@@ -2,3 +2,11 @@ May 27, 2025 6:18:41 AM TripMate main
 SEVERE: GOOGLE_API_KEY not set or invalid.
 May 27, 2025 6:19:36 AM TripMate main
 SEVERE: GOOGLE_API_KEY not set or invalid.
+May 27, 2025 9:19:39 AM TripMate main
+INFO: Non-travel query: hey
+May 27, 2025 9:19:51 AM TripMate main
+INFO: Non-travel query: best time to visit japan
+May 27, 2025 9:19:57 AM TripMate main
+INFO: Non-travel query: 2+2
+May 27, 2025 9:20:02 AM TripMate main
+INFO: Non-travel query: 5+810
