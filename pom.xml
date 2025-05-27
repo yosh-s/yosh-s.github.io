@@ -24,6 +24,12 @@
             <version>20240303</version>
         </dependency>
 
+        <dependency>
+    <groupId>io.github.cdimascio</groupId>
+    <artifactId>dotenv-java</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
         <!-- Gson for JSON processing (optional) -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

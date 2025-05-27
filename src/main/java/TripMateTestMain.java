@@ -1,32 +1,21 @@
+package com.tripmate;
+
 import java.util.Scanner;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.io.IOException;
 import java.util.logging.Level;
-import io.github.cdimascio.dotenv.Dotenv;
+
 
 public class TripMateTestMain {
     private static final Logger LOGGER = Logger.getLogger(TripMateTestMain.class.getName());
 
     public static void main(String[] args) {
-        // Load .env variables
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-        // Set up logging
-        try {
-            FileHandler fileHandler = new FileHandler("tripmate_test.log", true);
-            fileHandler.setFormatter(new SimpleFormatter());
-            LOGGER.addHandler(fileHandler);
-            LOGGER.setLevel(Level.INFO);
-        } catch (IOException e) {
-            System.out.println("Error setting up logging: " + e.getMessage());
-            LOGGER.severe("Logging setup failed: " + e.getMessage());
-            return;
-        }
+        
 
         // Check API key
-        String googleApiKey = dotenv.get("GOOGLE_API_KEY");
+        String googleApiKey = System.getenv("GOOGLE_API_KEY");
         if (googleApiKey == null || googleApiKey.isEmpty()) {
             System.out.println("Error: GOOGLE_API_KEY not set or invalid.");
             LOGGER.severe("GOOGLE_API_KEY not set or invalid.");
