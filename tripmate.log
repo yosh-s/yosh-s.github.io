@@ -58,3 +58,11 @@ May 26, 2025 7:52:00 PM TripMate main
 INFO: Non-travel query: i like sri lanka
 May 26, 2025 7:52:08 PM TripMate main
 INFO: Non-travel query: travel sri lanka
+May 27, 2025 6:20:58 AM TripMate main
+SEVERE: GOOGLE_API_KEY not set or invalid.
+May 27, 2025 6:27:43 AM TripMate main
+INFO: Non-travel query: hey
+May 27, 2025 6:27:49 AM TripMate main
+INFO: Non-travel query: 2+2
+May 27, 2025 6:27:58 AM TripMate main
+INFO: Non-travel query: sin(60)

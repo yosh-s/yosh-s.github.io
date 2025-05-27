@@ -10,6 +10,7 @@ import java.net.http.HttpResponse;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class TripMate {
     private static final Logger LOGGER = Logger.getLogger(TripMate.class.getName());
@@ -29,6 +30,9 @@ public class TripMate {
         "Keep it concise (1-2 sentences) and include at least one emoji. Do not include any non-travel content.";
 
     public static void main(String[] args) {
+        // Load .env variables
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
         // Initialize logging
         try {
             FileHandler fileHandler = new FileHandler("tripmate.log", true);
@@ -42,15 +46,13 @@ public class TripMate {
         }
 
         // Check API key
-        String googleApiKey = System.getenv("GOOGLE_API_KEY");
+        String googleApiKey = dotenv.get("GOOGLE_API_KEY");
         if (googleApiKey == null || googleApiKey.isEmpty()) {
-            googleApiKey = "AIzaSyATdVI59TbqVsT0vL7qid6SNd0wghu7bHI"; // Default key for testing
-        }
-        if (googleApiKey == null || googleApiKey.isEmpty()) {
-            System.out.println("Error: GOOGLE_API_KEY not set.");
-            LOGGER.severe("GOOGLE_API_KEY not set.");
+            System.out.println("Error: GOOGLE_API_KEY not set or invalid.");
+            LOGGER.severe("GOOGLE_API_KEY not set or invalid.");
             return;
         }
+
 
         // Generate dynamic greeting
         String greeting = generateGreeting(googleApiKey);
